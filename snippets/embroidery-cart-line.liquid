@@ -1,0 +1,78 @@
+{% comment %}
+  Check if this product has embroidery metafield and get price
+  We need to check the product metafields, not the cart item properties
+{% endcomment %}
+{% assign product_has_embroidery = false %}
+{% assign embroidery_price = 0 %}
+{% for product in collections.all.products %}
+  {% if product.id == item.product_id and product.metafields.custom.embroidery_template %}
+    {% assign product_has_embroidery = true %}
+    {% assign embroidery_template = product.metafields.custom.embroidery_template.value %}
+    {% if embroidery_template.price %}
+      {% assign embroidery_price = embroidery_template.price.value %}
+    {% endif %}
+    {% break %}
+  {% endif %}
+{% endfor %}
+
+{% if product_has_embroidery %}
+<div class="cart-item__embroidery mt-2 p-3 rounded-lg bg-gray-100 text-sm leading-relaxed">
+  <div class="flex items-center justify-between mb-1">
+    {% if item.properties._embroidery == 'true' %}
+      <!-- When checked: show toggleable checkbox -->
+      <label class="inline-flex items-center gap-2 cursor-pointer">
+        <input 
+          type="checkbox" 
+          checked
+          class="h-4 w-4"
+          data-emb-cart-toggle
+          data-line-key="{{ item.key }}"
+          id="emb-toggle-{{ item.key }}"
+          name="emb-toggle-{{ item.key }}"
+        >
+        <span>Add Embroidered Name</span>
+      </label>
+    {% else %}
+      <!-- When not checked: show clickable link -->
+      <a href="{{ item.product.url }}?embroidery=true" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 cursor-pointer">
+        <input 
+          type="checkbox" 
+          class="h-4 w-4 pointer-events-none"
+          readonly
+        >
+        <span>Add Embroidered Name</span>
+      </a>
+    {% endif %}
+    <span class="text-gray-700" data-emb-surcharge="{{ embroidery_price | money_without_currency | replace: ',', '' }}">(+{{ embroidery_price | money }})</span>
+  </div>
+
+  {% if item.properties._embroidery == 'true' %}
+    <div class="text-xs text-gray-700 mt-2">
+      <div class="flex items-center justify-between">
+        <div>
+          {% if item.properties['Embroidery Name'] %}
+            {{ item.properties['Embroidery Name'] }}
+          {% endif %}
+
+          {% if item.properties['Embroidery Colour Code'] or item.properties['Embroidery Font Code'] %}
+            ,
+          {% endif %}
+
+          {% if item.properties['Embroidery Colour Code'] %}
+            {{ item.properties['Embroidery Colour Code'] }}
+          {% endif %}
+
+          {% if item.properties['Embroidery Colour Code'] and item.properties['Embroidery Font Code'] %}
+            ,
+          {% endif %}
+
+          {% if item.properties['Embroidery Font Code'] %}
+            {{ item.properties['Embroidery Font Code'] }}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endif %}
+  

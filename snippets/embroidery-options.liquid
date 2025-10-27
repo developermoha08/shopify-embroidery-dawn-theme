@@ -1,0 +1,119 @@
+{%- comment -%}
+  Embroidery UI (single surcharge per product)
+  Metafield: product.metafields.custom.embroidery_template → metaobject `embroidery_template`
+  Fields: image, char_limit, colors(list), fonts(list), price(Money)
+{%- endcomment -%}
+
+{% assign tpl = product.metafields.custom.embroidery_template.value %}
+{% if tpl %}
+  {% assign color_list = tpl.colors.value %}
+  {% assign font_list  = tpl.fonts.value %}
+
+   {%- comment -%} Money → cents cho JS {%- endcomment -%}
+   {% assign raw_price = tpl.price.value | money_without_currency | replace: ',', '' %}
+   {% assign price_cents = raw_price | times: 100 | round %}
+
+  <section id="embroidery" class="mt-6 rounded-2xl border border-gray-200 bg-gray-50">
+    <!-- Row: toggle + price -->
+    <div class="flex items-center justify-between px-4 py-3 md:px-6">
+      <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+        <input type="checkbox" class="h-4 w-4 rounded border-gray-300" data-emb-toggle-checkbox>
+        <span class="text-sm md:text-base">Add Embroidered Name</span>
+      </label>
+       <span class="text-sm text-gray-700">+{{ tpl.price.value | money }}</span>
+      <input type="hidden" name="emb_enabled" value="false">
+    </div>
+
+    <!-- Collapsible panel -->
+    <div class="px-4 pb-4 md:px-6 md:pb-6 hidden" data-emb-panel>
+      <p class="text-xs text-gray-600 mb-4">Add up to {{ tpl.char_limit }} characters</p>
+      <div>
+        <div class="w-full flex flex-col md:flex-row justify-between gap-[40px] md:gap-[60px]">
+          <!-- Name -->
+          <div>
+         
+            <label class="block mb-4">
+                <input name="emb_name" maxlength="{{ tpl.char_limit }}" placeholder="Embroidered Name"
+                    class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    data-emb-name>
+                <span class="mt-1 block text-xs text-gray-500">
+                <span data-emb-count>0</span>/{{ tpl.char_limit }}
+                </span>
+            </label>
+            <!-- Colours -->
+            {% if color_list and color_list != blank %}
+                <fieldset class="mb-4">
+                <legend class="mb-2 text-sm font-medium">Choose letter colour</legend>
+                <div class="flex items-center gap-4">
+                    {% for c_ref in color_list %}
+                    <label class="flex flex-col items-center gap-1 cursor-pointer">
+                        <input type="radio"
+                            name="emb_colour"
+                            value="{{ c_ref.code }}"
+                            class="peer sr-only"
+                            {% if forloop.first %}checked{% endif %}>
+            
+                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300
+                                    peer-checked:border-gray-900 peer-checked:ring-2 peer-checked:ring-gray-900/20"
+                              {% unless c_ref.swatch %}style="background-color: {{ c_ref.code }};"{% endunless %}>
+                        {% if c_ref.swatch %}
+                            <img src="{{ c_ref.swatch | image_url: width: 48 }}"
+                                width="48" height="48"
+                                class="h-6 w-6 rounded-full">
+                        {% endif %}
+                        </span>
+                        <span class="text-xs text-gray-700">{{ c_ref.title }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                </fieldset>
+            {% endif %}
+            <!-- Fonts -->
+            {% if font_list and font_list != blank %}
+                <fieldset class="mb-4">
+                <legend class="mb-2 text-sm font-medium">Choose font</legend>
+                <div class="flex gap-3 flex-wrap">
+                    {% for f_ref in font_list %}
+                    <label class="cursor-pointer">
+                        <input type="radio"
+                            name="emb_font"
+                            value="{{ f_ref.code }}"
+                            class="peer sr-only"
+                            {% if forloop.first %}checked{% endif %}>
+            
+                        <span class="inline-flex items-center justify-center gap-2 border px-[50px] rounded-sm py-3 text-sm font-medium
+                                    peer-checked:border-gray-900 peer-checked:bg-white peer-checked:text-black
+                                    peer-unchecked:border-gray-200 peer-unchecked:bg-gray-100 peer-unchecked:text-gray-500
+                                    hover:border-gray-300 transition-colors">
+                        {{ f_ref.title }}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                </fieldset>
+            {% endif %}
+        </div>
+      <!-- Right column: Image -->
+      <div class="flex justify-start">
+        {% if tpl.image %}
+          <img src="{{ tpl.image | image_url: width: 228 }}" width="228" height="228"
+               srcset="{{ tpl.image | image_url: width: 228 }} 1x, {{ tpl.image | image_url: width: 446 }} 2x"
+               alt="Mockup Image"
+               class="w-full max-w-sm rounded-xl border border-gray-200">
+        {% else %}
+          <div class="w-full max-w-sm aspect-square rounded-xl border border-dashed border-gray-300 grid place-items-center text-gray-400">
+            There is no image for this template.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <p class="text-xl pt-[24px] md:pt-4">Unfortunately we can not accept returns or exchanges on embroidered items.</p>
+
+      </div>
+    </div>
+
+    <script type="application/json" data-emb-config>
+      { "price_cents": {{ price_cents }}, "currency": {{ cart.currency.iso_code | json }} }
+    </script>
+  </section>
+{% endif %}

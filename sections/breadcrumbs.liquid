@@ -1,0 +1,67 @@
+{% assign sep = section.settings.separator | default: '/' %}
+<nav aria-label="Breadcrumb" class="page-width !pt-4 !pb-4">
+  <ol
+    class="m-0 p-0 list-none flex flex-wrap items-center gap-2 text-gray-600 text-base font-normal"
+    role="list"
+  >
+    <li>
+      <a href="{{ routes.root_url }}">Home</a>
+    </li>
+
+    {% if template contains 'product' %}
+      {% assign dept = product.metafields.custom.department %}
+      {% assign cate = product.metafields.custom.category %}
+      {% assign ctx_collection = collection %}
+      {% if ctx_collection == nil and product.collections.size > 0 %}
+        {% assign ctx_collection = product.collections.first %}
+      {% endif %}
+
+      {% if dept %}
+        <li aria-hidden="true" class="px-1 select-none"> {{ sep }} </li>
+        <li>
+          <a href="{{ routes.collections_url }}/{{ dept | handleize }}">{{ dept }}</a>
+        </li>
+      {% endif %}
+
+      {% if ctx_collection %}
+        <li aria-hidden="true" class="px-1 select-none"> {{ sep }} </li>
+        <li>
+          <a href="{{ ctx_collection.url }}">{{ ctx_collection.title }}</a>
+        </li>
+      {% elsif cate %}
+        <li aria-hidden="true" class="px-1 select-none"> {{ sep }} </li>
+        <li>
+          <a href="{{ routes.collections_url }}/{{ cate | handleize }}">{{ cate }}</a>
+        </li>
+      {% endif %}
+
+      <li aria-hidden="true" class="px-1 select-none"> {{ sep }} </li>
+      {% if section.settings.link_last %}
+        <li>
+          <a href="{{ product.url }}" aria-current="page">{{ product.title }}</a>
+        </li>
+      {% else %}
+        <li aria-current="page">{{ product.title }}</li>
+      {% endif %}
+
+    {% elsif template contains 'collection' %}
+      <li aria-hidden="true" class="px-1 select-none"> {{ sep }} </li>
+      <li aria-current="page">{{ collection.title }}</li>
+
+    {% else %}
+      <li aria-hidden="true" class="px-1 select-none"> {{ sep }} </li>
+      <li aria-current="page">{{ page_title }}</li>
+    {% endif %}
+  </ol>
+</nav>
+
+{% schema %}
+{
+  "name": "Breadcrumbs",
+  "settings": [
+    { "type": "text", "id": "separator", "label": "Separator", "default": "/" },
+    { "type": "checkbox", "id": "link_last", "label": "Link last item", "default": false }
+  ],
+  "presets": [{ "name": "Breadcrumbs" }]
+}
+{% endschema %}
